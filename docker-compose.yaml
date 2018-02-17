@@ -1,0 +1,60 @@
+version: '2'
+
+services:
+  # The Web Server
+  web:
+    build:
+      context: ./docker
+      dockerfile: ./web.docker
+    restart: always
+    volumes:
+      - ./:/var/www
+    ports:
+      - "80:80"
+      - "443:443"
+      - "587:587"
+    links:
+      - app
+
+
+  # The Application >> https://github.com/alterway/docker-php/blob/master/doc-php-fpm.md
+  app:
+    build:
+      context: ./docker
+      dockerfile: ./app.docker
+    volumes:
+      - ./:/var/www
+    links:
+      - mysql
+    environment:
+      - "DB_PORT=3306"
+      - "DB_HOST=mysql"
+      - "HPFPM_GLOBAL__pm:dynamic"
+      - "PHPFPM_GLOBAL__pm.max_children:500"
+
+
+  # The Database
+  mysql:
+    image: mysql:5.6
+    volumes:
+      - ../../mysql:/var/lib/mysql
+    environment:
+      - "MYSQL_DATABASE=Database Name"
+      - "MYSQL_USER=User Name"
+      - "MYSQL_PASSWORD=Password"
+      - "MYSQL_ROOT_PASSWORD=Your Root Password"
+    ports:
+        - "3306:3306"
+
+
+  # PHPMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+        - "MYSQL_USERNAME=root"
+        - "MYSQL_ROOT_PASSWORD=Your Root Password
+        - "PMA_HOST=mysql"
+    links:
+        - mysql
+    ports:
+        - "8000:80"
